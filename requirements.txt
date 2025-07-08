@@ -1,0 +1,4 @@
+jupyter_client
+uvicorn
+fastapi
+ipykernel
