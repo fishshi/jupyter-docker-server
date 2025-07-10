@@ -1,7 +1,8 @@
+import json
 import logging
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from AutoExiter import AutoExiter
 from KernelMgr import KernelMgr
@@ -28,30 +29,35 @@ class App:
 
     async def execute(self, request: ExecuteRequest):
         self.autoExiter.updateActivityTime()
-        try:
-            userId = request.userId
-            code = request.code
-            km = await self.kernelMgr.getKernel(userId)
-            kc = km.client()
-            kc.start_channels()
-            kc.execute(code)
-            outputs = []
-            while True:
-                msg = await kc.get_iopub_msg()
-                if msg['header']['msg_type'] != 'status':
-                    output = {
-                        'msg_type': msg['header']['msg_type'],
-                        'content': msg['content']
-                    }
-                    outputs.append(output)
-                else:
-                    if msg['content']['execution_state'] == 'idle':
-                        break
-            kc.stop_channels()
-            return JSONResponse(status_code=200, content={"statusCode": 200, "data": outputs})
-        except Exception as e:
-            logging.exception("Exception in execute")
-            return JSONResponse(status_code=500, content={"statusCode": 500, "message": str(e)})
+        async def msg_generator(kc):
+            try:
+                while True:
+                    msg = await kc.get_iopub_msg()
+                    if msg['header']['msg_type'] != 'status':
+                        output = {
+                            'msg_type': msg['header']['msg_type'],
+                            'content': msg['content']
+                        }
+                        yield json.dumps(output) + "\n"
+                    else:
+                        if msg['content']['execution_state'] == 'idle':
+                            break
+            except Exception as e:
+                logging.exception("Exception in execute")
+                error_msg = {'msg_type': 'error', 'content': str(e)}
+                yield json.dumps(error_msg) + "\n"
+            finally:
+                kc.stop_channels()
+        userId = request.userId
+        code = request.code
+        km = await self.kernelMgr.getKernel(userId)
+        kc = km.client()
+        kc.start_channels()
+        kc.execute(code)
+        return StreamingResponse(
+            msg_generator(kc),
+            media_type='application/json'
+        )
 
     async def startKernel(self, request: BaseRequest):
         self.autoExiter.updateActivityTime()
@@ -63,7 +69,6 @@ class App:
             return JSONResponse(status_code=500, content={"statusCode": 500, "message": str(e)})
 
     async def getKernelStatus(self, userId: int):
-        print("getKernelStatus")
         self.autoExiter.updateActivityTime()
         try:
             return JSONResponse(status_code=200, content={"statusCode": 200, "data": self.kernelMgr.getKernelStatus(userId)})
