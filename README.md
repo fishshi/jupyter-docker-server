@@ -7,6 +7,9 @@
 ## 快速开始
 
 ```bash
+git clone git@github.com:fishshi/jupyter-docker-server.git
+cd ./jupyter-docker-server
+docker build -t jupyter-docker-server .
 docker run -d -p 8888:8888 jupyter-docker-server
 ```
 
