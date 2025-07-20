@@ -129,3 +129,9 @@ docker run -d -p 8888:8888 jupyter-docker-server
 ## 父镜像
 
 - [jupyter/pytorch-notebook:cuda12-latest](https://quay.io/jupyter/pytorch-notebook)
+
+## 额外依赖
+
+[jupyter_client](https://github.com/jupyter/jupyter_client)
+[fastapi](https://github.com/fastapi/fastapi)
+[uvicorn](https://github.com/encode/uvicorn)
