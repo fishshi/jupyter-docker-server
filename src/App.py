@@ -24,6 +24,7 @@ class App:
         self.app.get("/getStatus/{kernelId}")(self.getKernelStatus)
         self.app.post("/shutdown")(self.shutdownKernel)
         self.app.post("/restart")(self.restartKernel)
+        self.app.post("/interrupt")(self.interruptKernel)
         self.app.get("/isReady")(self.isReady)
 
     async def execute(self, request: ExecuteRequest):
@@ -96,6 +97,15 @@ class App:
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in restartKernel " + request.kernelId)
+            return JSONResponse(status_code=500, content={"statusCode": 500, "message": str(e)})
+
+    async def interruptKernel(self, request: BaseRequest):
+        try:
+            kernelId: str = request.kernelId
+            await self.kernelMgr.interruptKernel(kernelId)
+            return JSONResponse(status_code=200, content={"statusCode": 200})
+        except Exception as e:
+            logging.exception("Exception in interruptKernel " + request.kernelId)
             return JSONResponse(status_code=500, content={"statusCode": 500, "message": str(e)})
 
     async def isReady(self):

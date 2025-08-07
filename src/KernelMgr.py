@@ -77,6 +77,15 @@ class KernelMgr:
         else:
             return kwi.getKernel()
 
+    async def interruptKernel(self, kernelId) -> None:
+        """
+        中断内核的执行 <p>
+        如果内核对象不存在什么也不做 <p>
+        """
+        kwi: KernelWithInfo | None = self.kernels.get(kernelId)
+        if kwi:
+            await kwi.getKernel().interrupt_kernel()
+
     async def shutdownKernel(self, kernelId) -> None:
         """
         关闭并删除内核对象 <p>

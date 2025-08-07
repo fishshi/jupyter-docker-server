@@ -125,6 +125,28 @@ docker run -d -p 8888:8888 jupyter-docker-server
 }
 ```
 
+### 6. 中断执行
+- **接口地址**: `POST /interrupt`
+- **说明**: 根据请求体中的 `kernelId`, 中断对应 Jupyter Kernel 的执行。如果对应 Id 的内核不存在，则什么也不做。
+- **请求体**:
+```typescript
+{
+  "kernelId": string
+}
+```
+- **响应体**:
+```json
+{
+  "statusCode": 200
+}
+```
+```json
+{
+  "statusCode": 500,
+  "msg": "<Exception Message>"
+}
+```
+
 ## 注意
 
 空闲的内核 1h 后会自动停止, 该内核所有的上下文信息会被清除无法恢复。
