@@ -18,5 +18,8 @@ ENV PYDEVD_DISABLE_FILE_VALIDATION=1
 
 EXPOSE 8888
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -sf http://localhost:8888/isReady | grep -q "ready" || exit 1
+
 # 默认使用 bash 启动脚本
 ENTRYPOINT ["/usr/local/bin/run.sh"]
