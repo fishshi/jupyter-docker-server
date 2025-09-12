@@ -14,7 +14,7 @@ class KernelWithInfo:
 class KernelMgr:
     def __init__(self):
         self.kernels: dict[str, KernelWithInfo] = {}
-        self.lock = threading.Lock()
+        self.lock = asyncio.Lock()
         threading.Thread(target=self.checkLoop, daemon=True).start()
 
     async def _startKernel(self, kernelId) -> AsyncKernelManager:
@@ -22,9 +22,9 @@ class KernelMgr:
         内部函数，创建并启动内核对象 <p>
         创建并启动内核对象，放入对象字典中并返回内核对象 <p>
         如果内核对象已经存在则直接返回 <p>
-        使用锁确保线程安全 <p>
+        使用协程锁保证不会重复创建内核 <p>
         """
-        with self.lock:
+        async with self.lock:
             kwi: KernelWithInfo | None = self.kernels.get(kernelId)
             if kwi:
                 return kwi.getKernel()
