@@ -9,10 +9,12 @@ from KernelMgr import KernelMgr
 
 class ExecuteRequest(BaseModel):
     kernelId: str
+    kernelName: str
     code: str
 
 class BaseRequest(BaseModel):
     kernelId: str
+    kernelName: str
 
 class App:
     def __init__(self):
@@ -32,6 +34,7 @@ class App:
             try:
                 while True:
                     msg = await kc.get_iopub_msg()
+                    logging.info(msg)
                     if msg['header']['msg_type'] == 'status':
                         if msg['content']['execution_state'] == 'idle':
                             break
@@ -58,7 +61,8 @@ class App:
 
         kernelId: str = request.kernelId
         code: str = request.code
-        km = await self.kernelMgr.getKernel(kernelId)
+        km = await self.kernelMgr.getKernel(kernelId, request.kernelName)
+        logging.info("Executing code: " + code)
         kc = km.client()
         kc.start_channels()
         kc.execute(code)
@@ -69,7 +73,7 @@ class App:
 
     async def startKernel(self, request: BaseRequest):
         try:
-            await self.kernelMgr.startKernel(request.kernelId)
+            await self.kernelMgr.startKernel(request.kernelId, request.kernelName)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in startKernel " + request.kernelId)
@@ -93,7 +97,7 @@ class App:
     async def restartKernel(self, request: BaseRequest):
         try:
             kernelId: str = request.kernelId
-            await self.kernelMgr.restartKernel(kernelId)
+            await self.kernelMgr.restartKernel(kernelId, request.kernelName)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in restartKernel " + request.kernelId)

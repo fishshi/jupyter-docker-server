@@ -1,4 +1,10 @@
-FROM quay.io/jupyter/pytorch-notebook:cuda12-latest
+FROM quay.io/jupyter/minimal-notebook:latest
+
+# 添加额外语言支持的内核依赖
+USER root
+COPY extrakernel.sh /tmp/extrakernel.sh
+RUN /tmp/extrakernel.sh
+USER $NB_UID
 
 # 安装所需 Python 包
 COPY requirements.txt /tmp/
@@ -12,6 +18,11 @@ WORKDIR /srv/gateway/
 USER root
 COPY run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh
+USER $NB_UID
+
+# 给予 .ipython 目录写权限
+USER root
+RUN mkdir -p /home/jovyan/.ipython && chown -R $NB_UID:$NB_GID /home/jovyan/.ipython
 USER $NB_UID
 
 ENV PYDEVD_DISABLE_FILE_VALIDATION=1

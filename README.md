@@ -2,7 +2,7 @@
 
 ## 简介
 
-一个容器化的 Jupyter Notebook 服务器, 基于 Docker 镜像, 可以通过请求的方式在一个 Python 环境中运行并管理多个 Jupyter Kernels。
+一个容器化的 Jupyter Notebook 服务器, 基于 Docker 镜像, 可以通过请求的方式在 Python 环境中运行并管理多个支持多种不同语言的 Jupyter Kernels。
 
 ## 快速开始
 
@@ -21,7 +21,8 @@ docker run -d -p 8888:8888 jupyter-docker-server
 - **请求体**:
 ```typescript
 {
-  "kernelId": string
+  "kernelId": string,
+  "kernelName": string
 }
 ```
 - **响应体**:
@@ -88,7 +89,8 @@ docker run -d -p 8888:8888 jupyter-docker-server
 - **请求体**:
 ```typescript
 {
-  "kernelId": string
+  "kernelId": string,
+  "kernelName": string
 }
 ```
 - **响应体**:
@@ -111,6 +113,7 @@ docker run -d -p 8888:8888 jupyter-docker-server
 ```typescript
 {
   "kernelId": string,
+  "kernelName": string,
   "code": string
 }
 ```

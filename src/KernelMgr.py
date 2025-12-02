@@ -4,8 +4,8 @@ import time
 from jupyter_client.manager import AsyncKernelManager
 
 class KernelWithInfo:
-    def __init__(self):
-        self.kernel: AsyncKernelManager = AsyncKernelManager()
+    def __init__(self, kernelName):
+        self.kernel: AsyncKernelManager = AsyncKernelManager(kernel_name = kernelName)
         self.lastActivityTime = time.time()
     def getKernel(self) -> AsyncKernelManager:
         self.lastActivityTime = time.time()
@@ -17,7 +17,7 @@ class KernelMgr:
         self.lock = asyncio.Lock()
         threading.Thread(target=self.checkLoop, daemon=True).start()
 
-    async def _startKernel(self, kernelId) -> AsyncKernelManager:
+    async def _startKernel(self, kernelId, kernelName) -> AsyncKernelManager:
         """
         内部函数，创建并启动内核对象 <p>
         创建并启动内核对象，放入对象字典中并返回内核对象 <p>
@@ -28,12 +28,12 @@ class KernelMgr:
             kwi: KernelWithInfo | None = self.kernels.get(kernelId)
             if kwi:
                 return kwi.getKernel()
-            kwi = KernelWithInfo()
+            kwi = KernelWithInfo(kernelName)
             await kwi.getKernel().start_kernel()
             self.kernels[kernelId] = kwi
             return kwi.getKernel()
 
-    async def restartKernel(self, kernelId) -> AsyncKernelManager:
+    async def restartKernel(self, kernelId, kernelName) -> AsyncKernelManager:
         """
         重启并返回内核对象 <p>
         如果内核对象不存在则创建并返回 <p>
@@ -43,7 +43,7 @@ class KernelMgr:
             await kwi.getKernel().restart_kernel()
             return kwi.getKernel()
         else:
-            km: AsyncKernelManager = await self._startKernel(kernelId)
+            km: AsyncKernelManager = await self._startKernel(kernelId, kernelName)
             return km
 
     def getKernelStatus(self, kernelId) -> str:
@@ -57,23 +57,23 @@ class KernelMgr:
         else:
             return "已关闭"
 
-    async def startKernel(self, kernelId) -> None:
+    async def startKernel(self, kernelId, kernelName) -> None:
         """
         启动并返回提示信息 <p>
         如果内核对象不存在则创建 <p>
         如果内核对象存在则什么也不做 <p>
         """
         if kernelId not in self.kernels:
-            await self._startKernel(kernelId)
+            await self._startKernel(kernelId, kernelName)
 
-    async def getKernel(self, kernelId) -> AsyncKernelManager:
+    async def getKernel(self, kernelId, kernelName) -> AsyncKernelManager:
         """
         获取并返回内核对象 <p>
         如果内核对象不存在则创建并返回 <p>
         """
         kwi: KernelWithInfo | None = self.kernels.get(kernelId)
         if not kwi:
-            return await self._startKernel(kernelId)
+            return await self._startKernel(kernelId, kernelName)
         else:
             return kwi.getKernel()
 
