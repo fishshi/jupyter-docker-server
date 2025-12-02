@@ -15,9 +15,13 @@ docker run -d -p 8888:8888 jupyter-docker-server
 
 ## API
 
+### 0. 通用参数
+- **kernelId**: 内核 Id, 用于唯一标识一个内核。
+- **kernelName**: 内核名称, 用于指定该内核的语言。没有指定时使用默认值 `python3`。
+
 ### 1. 创建内核
 - **接口地址**: `POST /start`
-- **说明**: 根据请求体中的 `kernelId`, 创建一个新的 Jupyter Kernel。如果对应 Id 的内核已经存在，则什么也不做。
+- **说明**: 根据请求体中的 `kernelId` 和 `kernelName`, 创建一个新的 Jupyter Kernel。如果对应 Id 的内核已经存在，则什么也不做。
 - **请求体**:
 ```typescript
 {
@@ -85,7 +89,7 @@ docker run -d -p 8888:8888 jupyter-docker-server
 
 ### 4. 重启内核
 - **接口地址**: `POST /restart`
-- **说明**: 根据请求体中的 `kernelId`, 重启对应的 Jupyter Kernel。如果对应 Id 的内核不存在，则创建内核。
+- **说明**: 根据请求体中的 `kernelId`, 重启对应的 Jupyter Kernel。如果对应 Id 的内核不存在，则根据 `kernelId` 和 `kernelName` 创建内核。
 - **请求体**:
 ```typescript
 {
@@ -108,7 +112,7 @@ docker run -d -p 8888:8888 jupyter-docker-server
 
 ### 5. 执行代码
 - **接口地址**: `POST /execute`
-- **说明**: 根据请求体中的 `kernelId` 和 `code`, 选择对应的 Jupyter Kernel 执行指定代码。如果对应 Id 的内核不存在，则创建内核并执行代码。流式返回执行结果。
+- **说明**: 根据请求体中的 `kernelId` 和 `code`, 选择对应的 Jupyter Kernel 执行指定代码。如果对应 Id 的内核不存在，则根据 `kernelId` 和 `kernelName` 创建内核并执行代码。流式返回执行结果。
 - **请求体**:
 ```typescript
 {
@@ -152,7 +156,8 @@ docker run -d -p 8888:8888 jupyter-docker-server
 
 ## 注意
 
-空闲的内核 1h 后会自动停止, 该内核所有的上下文信息会被清除无法恢复。
+1. 空闲的内核 1h 后会自动停止, 该内核所有的上下文信息会被清除无法恢复。
+2. 额外的语言支持需要在extrakernel.sh中添加相应的安装命令以配置
 
 ## 父镜像
 

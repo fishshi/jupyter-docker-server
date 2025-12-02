@@ -14,7 +14,7 @@ class ExecuteRequest(BaseModel):
 
 class BaseRequest(BaseModel):
     kernelId: str
-    kernelName: str
+    kernelName: str = "python3"
 
 class App:
     def __init__(self):
