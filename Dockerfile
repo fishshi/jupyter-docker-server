@@ -1,4 +1,4 @@
-FROM quay.io/jupyter/minimal-notebook:latest
+FROM quay.io/jupyter/pytorch-notebook:cuda12-latest
 
 # 添加额外语言支持的内核依赖
 USER root
