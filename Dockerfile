@@ -2,8 +2,14 @@ FROM quay.io/jupyter/pytorch-notebook:cuda12-latest
 
 # 添加额外语言支持的内核依赖
 USER root
-COPY extrakernel.sh /tmp/extrakernel.sh
-RUN /tmp/extrakernel.sh
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends wget git unzip
+
+COPY kernelxcpp.sh /tmp/kernelxcpp.sh
+COPY kerneljava.sh /tmp/kerneljava.sh
+
+RUN /tmp/kernelxcpp.sh
+RUN /tmp/kerneljava.sh
 USER $NB_UID
 
 # 安装所需 Python 包
