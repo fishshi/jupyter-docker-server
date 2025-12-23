@@ -1,15 +1,26 @@
 FROM quay.io/jupyter/pytorch-notebook:cuda12-latest
 
+ARG ENABLE_CPP_KERNEL=false
+ARG ENABLE_JAVA_KERNEL=false
+
 # 添加额外语言支持的内核依赖
 USER root
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends wget git unzip
 
-COPY kernelxcpp.sh /tmp/kernelxcpp.sh
 COPY kerneljava.sh /tmp/kerneljava.sh
+COPY kernelxcpp.sh /tmp/kernelxcpp.sh
 
-RUN /tmp/kernelxcpp.sh
-RUN /tmp/kerneljava.sh
+RUN if [ "$ENABLE_CPP_KERNEL" = "true" ]; then \
+    bash /tmp/kernelxcpp.sh; \
+    else \
+    echo "Skipping C++ kernel"; \
+    fi
+RUN if [ "$ENABLE_JAVA_KERNEL" = "true" ]; then \
+    bash /tmp/kerneljava.sh; \
+    else \
+    echo "Skipping Java kernel"; \
+    fi
 USER $NB_UID
 
 # 安装所需 Python 包

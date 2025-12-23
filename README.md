@@ -154,17 +154,35 @@ docker run -d -p 8888:8888 jupyter-docker-server
 }
 ```
 
-## 注意
+## 高级补充说明
 
-1. 空闲的内核 1h 后会自动停止, 该内核所有的上下文信息会被清除无法恢复。
-2. 额外的语言支持需要在extrakernel.sh中添加相应的安装命令以配置
+### 构建时可选项
 
-## 父镜像
+#### 其它语言支持
+
+系统支持通过构建镜像时的参数来指定额外的语言支持。下面是一个构建包含 Python、CPP 和 Java 语言支持服务的例子：
+
+```bash
+docker build -t jupyter-docker-server \
+    --build-arg ENABLE_CPP_KERNEL=true \
+    --build-arg ENABLE_JAVA_KERNEL=true \
+    .
+```
+
+可选的语言支持、构建参数以及对应的内核名称如下表所示：
+
+| 语言 | 构建参数           | 内核名称             |
+| ---- | ------------------ | -------------------- |
+| CPP  | ENABLE_CPP_KERNEL  | xcpp11 xcpp14 xcpp17 |
+| JAVA | ENABLE_JAVA_KERNEL | java                 |
+
+## 项目依赖
+
+### 父镜像
 
 [jupyter/pytorch-notebook:cuda12-latest](https://quay.io/jupyter/pytorch-notebook)
 
-## 额外依赖
+### 其它语言内核依赖
 
-[jupyter_client](https://github.com/jupyter/jupyter_client)  
-[fastapi](https://github.com/fastapi/fastapi)  
-[uvicorn](https://github.com/encode/uvicorn)
+[xeus-cling](https://github.com/jupyter-xeus/xeus-cling)  
+[jjava](https://github.com/dflib/jjava)

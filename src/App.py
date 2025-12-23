@@ -9,7 +9,7 @@ from KernelMgr import KernelMgr
 
 class ExecuteRequest(BaseModel):
     kernelId: str
-    kernelName: str
+    kernelName: str = "python3"
     code: str
 
 class BaseRequest(BaseModel):
