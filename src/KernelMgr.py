@@ -7,6 +7,7 @@ class KernelWithInfo:
     def __init__(self, kernelName):
         self.kernel: AsyncKernelManager = AsyncKernelManager(kernel_name = kernelName)
         self.lastActivityTime = time.time()
+
     def getKernel(self) -> AsyncKernelManager:
         self.lastActivityTime = time.time()
         return self.kernel
@@ -15,7 +16,6 @@ class KernelMgr:
     def __init__(self):
         self.kernels: dict[str, KernelWithInfo] = {}
         self.lock = asyncio.Lock()
-        threading.Thread(target=self.checkLoop, daemon=True).start()
 
     async def _startKernel(self, kernelId, kernelName) -> AsyncKernelManager:
         """
@@ -96,9 +96,9 @@ class KernelMgr:
             del self.kernels[kernelId]
             await kwi.getKernel().shutdown_kernel()
 
-    def checkLoop(self) -> None:
+    def startCheckLoop(self) -> None:
         """
-        初始化自动关闭空闲内核功能 <p>
+        启动自动关闭空闲内核功能 <p>
         """
         async def asyncCheckLoop():
             """
@@ -109,9 +109,9 @@ class KernelMgr:
             while True:
                 unActiveKernelIds = []
                 for kernelId, kwi in self.kernels.items():
-                    if time.time() - kwi.lastActivityTime > 60 * 60:
+                    if time.time() - kwi.lastActivityTime > 60:
                         unActiveKernelIds.append(kernelId)
                 for kernelId in unActiveKernelIds:
                     await self.shutdownKernel(kernelId)
-                await asyncio.sleep(60 * 60)
-        asyncio.run(asyncCheckLoop())
+                await asyncio.sleep(60)
+        asyncio.create_task(asyncCheckLoop())

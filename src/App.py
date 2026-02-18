@@ -4,6 +4,7 @@ import uvicorn
 from uvicorn.config import LOGGING_CONFIG
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, StreamingResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from KernelMgr import KernelMgr
 
@@ -18,8 +19,8 @@ class BaseRequest(BaseModel):
 
 class App:
     def __init__(self):
-        self.app = FastAPI()
         self.kernelMgr = KernelMgr()
+        self.app = FastAPI(lifespan=self.lifespan)
 
         self.app.post("/execute")(self.execute)
         self.app.post("/start")(self.startKernel)
@@ -28,6 +29,11 @@ class App:
         self.app.post("/restart")(self.restartKernel)
         self.app.post("/interrupt")(self.interruptKernel)
         self.app.get("/isReady")(self.isReady)
+
+    @asynccontextmanager
+    async def lifespan(self, _: FastAPI):
+        self.kernelMgr.startCheckLoop()
+        yield
 
     async def execute(self, request: ExecuteRequest):
         async def msg_generator(kc):
@@ -51,7 +57,6 @@ class App:
                             'content': msg['content']
                         }
                     yield json.dumps(output) + "\n"
-
             except Exception as e:
                 logging.exception("Exception in execute")
                 error_msg = {'msg_type': 'error', 'content': str(e)}
