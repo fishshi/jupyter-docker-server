@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 -u App.py
+python3 -u main.py

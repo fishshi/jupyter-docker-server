@@ -1,25 +1,17 @@
 import json
 import logging
-import uvicorn
-from uvicorn.config import LOGGING_CONFIG
+from config.LoggingConfig import LoggingConfig
+from type.BaseRequest import BaseRequest
+from type.ExecuteRequest import ExecuteRequest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, StreamingResponse
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
-from KernelMgr import KernelMgr
-
-class ExecuteRequest(BaseModel):
-    kernelId: str
-    kernelName: str = "python3"
-    code: str
-
-class BaseRequest(BaseModel):
-    kernelId: str
-    kernelName: str = "python3"
+from util.KernelMgrPool import KernelMgrPool
 
 class App:
     def __init__(self):
-        self.kernelMgr = KernelMgr()
+        LoggingConfig.setup()
+        self.kernelMgrPool = KernelMgrPool()
         self.app = FastAPI(lifespan=self.lifespan)
 
         self.app.post("/execute")(self.execute)
@@ -32,7 +24,7 @@ class App:
 
     @asynccontextmanager
     async def lifespan(self, _: FastAPI):
-        self.kernelMgr.startCheckLoop()
+        self.kernelMgrPool.startCheckLoop()
         yield
 
     async def execute(self, request: ExecuteRequest):
@@ -66,7 +58,7 @@ class App:
 
         kernelId: str = request.kernelId
         code: str = request.code
-        km = await self.kernelMgr.getKernel(kernelId, request.kernelName)
+        km = await self.kernelMgrPool.getKernel(kernelId, request.kernelName)
         logging.info("Executing code: " + code)
         kc = km.client()
         kc.start_channels()
@@ -78,7 +70,7 @@ class App:
 
     async def startKernel(self, request: BaseRequest):
         try:
-            await self.kernelMgr.startKernel(request.kernelId, request.kernelName)
+            await self.kernelMgrPool.startKernel(request.kernelId, request.kernelName)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in startKernel " + request.kernelId)
@@ -86,14 +78,14 @@ class App:
 
     async def getKernelStatus(self, kernelId: str):
         try:
-            return JSONResponse(status_code=200, content={"statusCode": 200, "data": self.kernelMgr.getKernelStatus(kernelId)})
+            return JSONResponse(status_code=200, content={"statusCode": 200, "data": self.kernelMgrPool.getKernelStatus(kernelId)})
         except Exception as e:
             logging.exception("Exception in getKernelStatus " + kernelId)
             return JSONResponse(status_code=500, content={"statusCode": 500, "message": str(e)})
 
     async def shutdownKernel(self, request: BaseRequest):
         try:
-            await self.kernelMgr.shutdownKernel(request.kernelId)
+            await self.kernelMgrPool.shutdownKernel(request.kernelId)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in shutdownKernel " + request.kernelId)
@@ -102,7 +94,7 @@ class App:
     async def restartKernel(self, request: BaseRequest):
         try:
             kernelId: str = request.kernelId
-            await self.kernelMgr.restartKernel(kernelId, request.kernelName)
+            await self.kernelMgrPool.restartKernel(kernelId, request.kernelName)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in restartKernel " + request.kernelId)
@@ -111,7 +103,7 @@ class App:
     async def interruptKernel(self, request: BaseRequest):
         try:
             kernelId: str = request.kernelId
-            await self.kernelMgr.interruptKernel(kernelId)
+            await self.kernelMgrPool.interruptKernel(kernelId)
             return JSONResponse(status_code=200, content={"statusCode": 200})
         except Exception as e:
             logging.exception("Exception in interruptKernel " + request.kernelId)
@@ -119,17 +111,3 @@ class App:
 
     async def isReady(self):
         return "ready"
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-)
-
-LOGGING_CONFIG["formatters"]["default"]["fmt"] = "%(asctime)s - %(levelprefix)s %(message)s"
-LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelprefix)s %(client_addr)s - \"%(request_line)s\" %(status_code)s"
-
-# 运行 FastAPI
-if __name__ == '__main__':
-    app_instance = App()
-    uvicorn.run(app_instance.app, host="0.0.0.0", port=8888, timeout_keep_alive=60)
